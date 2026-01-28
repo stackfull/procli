@@ -1,0 +1,5 @@
+[tools]
+rust = "nightly"
+
+[tasks.prat]
+run = "cargo run"
