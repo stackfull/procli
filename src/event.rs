@@ -1,11 +1,12 @@
 use color_eyre::eyre::OptionExt;
 use futures::{FutureExt, StreamExt};
 use ratatui::crossterm::event::Event as CrosstermEvent;
-use std::time::Duration;
+use std::{process::ExitStatus, time::Duration};
 use tokio::sync::mpsc;
+use uuid::Uuid;
 
 /// The frequency at which tick events are emitted.
-const TICK_FPS: f64 = 30.0;
+pub const TICK_FPS: f64 = 30.0;
 
 /// Representation of all possible events.
 #[derive(Clone, Debug)]
@@ -33,6 +34,8 @@ pub enum Event {
 pub enum AppEvent {
     /// Config file changed.
     Reload,
+    StatsRefresh,
+    ProcessDied(Uuid, ExitStatus),
     /// Quit the application.
     Quit,
 }

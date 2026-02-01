@@ -1,0 +1,42 @@
+name = "Sample"
+
+[environment]
+SIMPLE = "sample"
+
+# [[services]]
+# name = "api_gwy"
+# display = "API Gateway"
+# image = "nginx:alpine"
+# environment = { "PORT"= "8080", "SSL_PORT"= "8444" }
+# dependencies = ["backend"]
+
+# [[services]]
+# name = "backend"
+# display = "Main Backend"
+# image = "nginx:alpine"
+# environment = { "PORT"= "8080", "SSL_PORT"= "8444" }
+# dependencies = ["payment-stub"]
+
+[[services]]
+name = "dummy-service-1"
+display = "Dummy Service 1"
+command = "python -c \"import time, sys; print('Service 1 starting...', flush=True); [print(f'Service 1 heartbeat {i}', flush=True) or sys.stdout.flush() or time.sleep(3) for i in range(1, 10)]\""
+restart.enabled = true
+restart.max_restarts = 5
+restart.cooloff = 10
+
+[[services]]
+name = "dummy-service-2"
+display = "Dummy Service 2"
+command = "python -c \"import time, sys; print('Service 2 starting...', flush=True); [print(f'Service 2 heartbeat {i}', flush=True) or sys.stdout.flush() or time.sleep(5) for i in range(1, 10)]\""
+
+[[stubs]]
+name = "payment-stub"
+display = "Payment Service Mock"
+image = "wiremock/wiremock:latest"
+directory = "./stubs/payments"
+
+[[agents]]
+name = "baseline-load"
+display = "Baseline Load Test"
+scenario = "./scenarios/baseline-load.js"

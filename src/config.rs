@@ -6,18 +6,17 @@ use config;
 use log::*;
 use notify::{RecommendedWatcher, Watcher};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, path::PathBuf, time::Duration};
+use std::{collections::HashMap, path::PathBuf};
 use tokio::sync::mpsc::UnboundedSender;
 
 use crate::event::{AppEvent, Event};
 
 pub const DEFAULT_FILE: &str = "prat.toml";
 
-#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+#[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct RestartPolicy {
     pub enabled: bool,
-    pub backoff_min: Duration,
-    pub backoff_max: Duration,
+    pub cooloff: u64,
     pub max_restarts: u32,
 }
 
@@ -79,9 +78,8 @@ pub struct ConfigManager {
 
 impl ConfigManager {
     pub fn new(file_path: PathBuf, sender: UnboundedSender<Event>) -> Result<ConfigManager> {
-        let captured = sender.clone();
         let mut watcher = notify::recommended_watcher(move |_| {
-            let _ = captured.send(Event::App(AppEvent::Reload));
+            let _ = sender.send(Event::App(AppEvent::Reload));
         })?;
         info!(target: "Config", "Watching file {:?}", file_path);
         watcher.watch(&file_path, notify::RecursiveMode::NonRecursive)?;
