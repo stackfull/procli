@@ -241,6 +241,16 @@ impl ProcessManager {
             error!("Received process died for unknown process {}", id);
         }
     }
+
+    pub fn remove(&mut self, name: &str) -> color_eyre::Result<()> {
+        if let Some(proc) = self.processes.iter_mut().find(|p| p.name == name) {
+            info!(target: name, "Killing process");
+            proc.kill();
+            Ok(())
+        } else {
+            Err(eyre!("No such process"))
+        }
+    }
 }
 
 impl Service {

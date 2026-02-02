@@ -65,6 +65,23 @@ pub struct PratConfig {
     pub log_buffer_size: usize,
 }
 
+impl PratConfig {
+    pub fn get_service(&self, name: &str) -> Option<&Service> {
+        self.services.iter().find(|s| s.name == name)
+    }
+    pub fn get_stub(&self, name: &str) -> Option<&Stub> {
+        self.stubs.iter().find(|s| s.name == name)
+    }
+    pub fn get_agent(&self, name: &str) -> Option<&Agent> {
+        self.agents.iter().find(|a| a.name == name)
+    }
+    pub fn contains(&self, name: &str) -> bool {
+        self.get_service(name).is_some()
+            || self.get_stub(name).is_some()
+            || self.get_agent(name).is_some()
+    }
+}
+
 fn default_log_buffer_size() -> usize {
     10_000
 }
