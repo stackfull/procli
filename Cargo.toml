@@ -9,6 +9,7 @@ readme = "README.md"
 repository = "https://github.com/stackfull/procli"
 homepage = "https://github.com/stackfull/procli"
 categories = ["command-line-utilities", "development-tools", "visualization"]
+include = ["src/**", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 crossterm = { version = "0.29.0", features = ["event-stream"] }
