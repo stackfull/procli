@@ -11,7 +11,7 @@ use tokio::sync::mpsc::UnboundedSender;
 
 use crate::event::{AppEvent, Event};
 
-pub const DEFAULT_FILE: &str = "prat.toml";
+pub const DEFAULT_FILE: &str = "procli.toml";
 
 #[derive(Debug, Default, Copy, Clone, Serialize, Deserialize)]
 pub struct RestartPolicy {
@@ -54,7 +54,7 @@ pub struct Agent {
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
-pub struct PratConfig {
+pub struct ProcliConfig {
     #[serde(default)]
     pub services: Vec<Service>,
     #[serde(default)]
@@ -65,7 +65,7 @@ pub struct PratConfig {
     pub log_buffer_size: usize,
 }
 
-impl PratConfig {
+impl ProcliConfig {
     pub fn get_service(&self, name: &str) -> Option<&Service> {
         self.services.iter().find(|s| s.name == name)
     }
@@ -89,7 +89,7 @@ fn default_log_buffer_size() -> usize {
 #[derive(Debug)]
 pub struct ConfigManager {
     pub file_path: PathBuf,
-    config: PratConfig,
+    config: ProcliConfig,
     _watcher: RecommendedWatcher,
 }
 
@@ -107,19 +107,19 @@ impl ConfigManager {
         })
     }
 
-    pub fn current(&self) -> PratConfig {
+    pub fn current(&self) -> ProcliConfig {
         self.config.clone()
     }
 
-    pub fn reload(&mut self) -> Result<PratConfig> {
+    pub fn reload(&mut self) -> Result<ProcliConfig> {
         self.config = Self::load_from_file(self.file_path.clone())?;
         Ok(self.current())
     }
 
-    fn load_from_file(file_path: PathBuf) -> Result<PratConfig> {
+    fn load_from_file(file_path: PathBuf) -> Result<ProcliConfig> {
         let raw = config::Config::builder()
             .add_source(config::File::from(file_path))
-            .add_source(config::Environment::with_prefix("PRAT_"))
+            .add_source(config::Environment::with_prefix("PROCLI_"))
             .build()?;
         Ok(raw.try_deserialize()?)
     }

@@ -1,5 +1,5 @@
 [tools]
 rust = "stable"
 
-[tasks.prat]
+[tasks.procli]
 run = "cargo run"

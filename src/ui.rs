@@ -4,7 +4,7 @@ use std::{
 };
 
 use crate::{
-    config::PratConfig,
+    config::ProcliConfig,
     event::TICK_FPS,
     proc::{Process, ProcessRestart, ProcessStats},
     theme::Theme,
@@ -22,7 +22,7 @@ use tui_logger::*;
 pub struct DashboardWidget<'a> {
     pub ui: &'a UiState,
     pub processes: &'a [Process],
-    pub config: &'a PratConfig,
+    pub config: &'a ProcliConfig,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

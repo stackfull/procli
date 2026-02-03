@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use crate::{
-    config::{ConfigManager, PratConfig},
+    config::{ConfigManager, ProcliConfig},
     event::{AppEvent, Event, EventHandler},
     proc::ProcessManager,
     ui::{DashboardWidget, Focussable, UiState},
@@ -138,7 +138,7 @@ impl App {
     /// Start services, stubs, and agents from the given configuration.
     /// Changes to the service lineup use the names as unique keys but
     /// let the process manager decide whether to restart or not.
-    fn start(&mut self, config: &PratConfig) -> Result<()> {
+    fn start(&mut self, config: &ProcliConfig) -> Result<()> {
         let removals: Vec<String> = self
             .proc
             .processes

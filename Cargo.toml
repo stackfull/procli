@@ -1,14 +1,13 @@
 [package]
-name = "prat"
+name = "procli"
 version = "0.1.0"
-description = "Process manager for development systems"
+description = "Process management CLI for development systems"
 authors = ["Paul <paul@stackfull.com>"]
 license = "MIT"
-license-file = "LICENSE"
 edition = "2024"
 readme = "README.md"
-repository = "https://github.com/stackfull/prat"
-homepage = "https://github.com/stackfull/prat"
+repository = "https://github.com/stackfull/procli"
+homepage = "https://github.com/stackfull/procli"
 categories = ["command-line-utilities", "development-tools", "visualization"]
 
 [dependencies]

@@ -40,7 +40,7 @@ async fn main() -> color_eyre::Result<()> {
         Some(Commands::Validate) => Ok(()),
         Some(Commands::Run) | None => {
             init_logger(tui_logger::LevelFilter::Debug)?;
-            let file_options = TuiLoggerFile::new("prat.log")
+            let file_options = TuiLoggerFile::new("procli.log")
                 .output_level(Some(TuiLoggerLevelOutput::Abbreviated))
                 .output_file(false)
                 .output_separator(':');
