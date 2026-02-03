@@ -1,4 +1,3 @@
-#![feature(push_mut)]
 use clap::{Parser, Subcommand};
 use log::info;
 use std::path::PathBuf;
