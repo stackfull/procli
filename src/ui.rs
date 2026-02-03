@@ -96,10 +96,10 @@ impl UiState {
 
     pub fn toggle_debug(&mut self) {
         self.debug = !self.debug;
-        if !self.debug {
-            if let Some(Focussable::Debug) = &self.focus {
-                self.focus = Some(Focussable::Process(0));
-            }
+        if !self.debug
+            && let Some(Focussable::Debug) = &self.focus
+        {
+            self.focus = Some(Focussable::Process(0));
         }
     }
 
@@ -126,14 +126,14 @@ impl UiState {
 
     pub fn update_procs(&mut self, count: usize) {
         self.procs = count;
-        if let Some(Focussable::Process(idx)) = &self.focus {
-            if *idx >= self.procs {
-                self.focus = Some(if self.procs == 0 {
-                    Focussable::Logs
-                } else {
-                    Focussable::Process(self.procs - 1)
-                });
-            }
+        if let Some(Focussable::Process(idx)) = &self.focus
+            && *idx >= self.procs
+        {
+            self.focus = Some(if self.procs == 0 {
+                Focussable::Logs
+            } else {
+                Focussable::Process(self.procs - 1)
+            });
         }
     }
 }
@@ -175,13 +175,13 @@ impl<'a> Widget for &mut DashboardWidget<'a> {
             _ => self.ui.theme.foreground,
         };
         TuiLoggerSmartWidget::default()
-            .style_error(panel_style.clone().fg(self.ui.theme.error))
-            .style_debug(panel_style.clone())
-            .style_warn(panel_style.clone().fg(self.ui.theme.warning))
-            .style_trace(panel_style.clone())
-            .style_info(panel_style.clone())
-            .style(panel_style.clone())
-            .border_style(panel_style.clone().fg(border_color))
+            .style_error(panel_style.fg(self.ui.theme.error))
+            .style_debug(panel_style)
+            .style_warn(panel_style.fg(self.ui.theme.warning))
+            .style_trace(panel_style)
+            .style_info(panel_style)
+            .style(panel_style)
+            .border_style(panel_style.fg(border_color))
             .output_separator(':')
             .output_timestamp(Some("%H:%M:%S".to_string()))
             .output_level(Some(TuiLoggerLevelOutput::Abbreviated))
@@ -210,11 +210,11 @@ impl<'a> Widget for &mut DashboardWidget<'a> {
             if let Some(area) = cells.next() {
                 ProcessWidget {
                     process: proc,
-                    focussed: match &self.ui.focus {
-                        Some(Focussable::Process(i)) if *i == index => true,
-                        _ => false,
-                    },
-                    ui: &self.ui,
+                    focussed: matches!(
+                        &self.ui.focus,
+                        Some(Focussable::Process(i)) if *i == index
+                    ),
+                    ui: self.ui,
                 }
                 .render(area, buf);
             }
@@ -268,7 +268,7 @@ impl<'a> Widget for ProcessWidget<'a> {
             );
             text.render(area, buf);
         } else {
-            let (cpu, ram) = split_stats(&self.ui, &self.process.stats, &self.process.stats_max);
+            let (cpu, ram) = split_stats(self.ui, &self.process.stats, &self.process.stats_max);
             let [top, middle, _] = vertical![==1,==1, ==1].areas(inner);
             cpu.render(top, buf);
             ram.render(middle, buf);
@@ -288,7 +288,7 @@ pub struct SingleStat<'a> {
 
 fn split_stats<'a>(
     ui: &'a UiState,
-    stats: &Vec<ProcessStats>,
+    stats: &[ProcessStats],
     max_stats: &ProcessStats,
 ) -> (SingleStat<'a>, SingleStat<'a>) {
     let timestamps: Vec<Instant> = stats.iter().map(|s| s.timestamp).collect();
@@ -305,7 +305,7 @@ fn split_stats<'a>(
         unit: "MB".to_string(),
         history: stats.iter().map(|s| s.memory_mb).collect(),
         max: max_stats.memory_mb,
-        timestamps: timestamps,
+        timestamps,
         ui,
     };
     (cpu_history, mem_history)

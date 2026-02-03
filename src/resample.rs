@@ -17,27 +17,23 @@ pub fn resample(
         panic!("samples and time_samples must have the same length");
     }
 
-    let mut result = vec![None; num_bins];
+    let mut result: Vec<Option<f32>> = vec![None; num_bins];
     let total_duration = end.duration_since(start);
     let bin_duration = total_duration / num_bins as u32;
 
-    for i in 0..num_bins {
+    for (i, r) in result.iter_mut().enumerate() {
         let bin_start = start + bin_duration * i as u32;
         let bin_end = bin_start + bin_duration;
-
-        let mut max_value: Option<f32> = None;
 
         for (j, &time_sample) in time_samples.iter().enumerate() {
             if time_sample > bin_start && time_sample <= bin_end {
                 let sample_value = samples[j];
-                max_value = match max_value {
+                *r = match *r {
                     Some(current_max) => Some(current_max.max(sample_value)),
                     None => Some(sample_value),
                 };
             }
         }
-
-        result[i] = max_value;
     }
     result
 }

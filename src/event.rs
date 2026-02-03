@@ -50,7 +50,7 @@ pub struct EventHandler {
 }
 
 impl EventHandler {
-    /// Constructs a new instance of [`EventHandler`] and spawns a new thread to handle events.
+    /// Constructs a new instance of [`EventTask`] and spawns a new thread to handle events.
     pub fn new() -> Self {
         let (sender, receiver) = mpsc::unbounded_channel();
         let actor = EventTask::new(sender.clone());
@@ -90,6 +90,12 @@ impl EventHandler {
     }
 }
 
+impl Default for EventHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// A thread that handles reading crossterm events and emitting tick events on a regular schedule.
 struct EventTask {
     /// Event sender channel.
@@ -97,7 +103,7 @@ struct EventTask {
 }
 
 impl EventTask {
-    /// Constructs a new instance of [`EventThread`].
+    /// Constructs a new instance of [`EventTask`].
     fn new(sender: mpsc::UnboundedSender<Event>) -> Self {
         Self { sender }
     }

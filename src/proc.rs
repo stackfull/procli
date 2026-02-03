@@ -290,7 +290,7 @@ impl Service {
                     .command
                     .as_ref()
                     .ok_or(eyre!("Must specify command if no image"))?;
-                let strings = shlex::split(&command).ok_or(eyre!("Bad command string"))?;
+                let strings = shlex::split(command).ok_or(eyre!("Bad command string"))?;
                 let program = strings
                     .first()
                     .ok_or(eyre!("Must specify command if no image"))?;

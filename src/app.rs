@@ -102,7 +102,7 @@ impl App {
                         _ => return Ok(()),
                     });
                 }
-                Some(Focussable::Process(idx)) => {}
+                Some(Focussable::Process(_)) => {}
                 Some(Focussable::Debug) => {}
                 None => {}
             },
@@ -155,7 +155,7 @@ impl App {
         }
         for svc in config.services.iter() {
             debug!("Start service {}", svc.name);
-            self.proc.upsert(&svc)?;
+            self.proc.upsert(svc)?;
         }
         for agent in config.agents.iter() {
             debug!("Start agent {}", agent.name);
