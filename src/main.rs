@@ -12,7 +12,6 @@ pub mod config;
 pub mod event;
 pub mod proc;
 pub mod resample;
-pub mod theme;
 pub mod ui;
 
 #[derive(Parser, Debug)]

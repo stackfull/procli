@@ -1,8 +1,8 @@
-// Theme Colors for Ratatui
-// Usage:
-//   use ratatui::style::Color;
-//   let theme = Theme::dark();
-//   let primary_color = theme.primary;
+//! Theme Colors for Ratatui
+//! Usage:
+//!   use ratatui::style::Color;
+//!   let theme = Theme::dark();
+//!   let primary_color = theme.primary;
 
 use ratatui::style::Color;
 

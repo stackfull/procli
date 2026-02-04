@@ -4,7 +4,10 @@ use crate::{
     config::{ConfigManager, ProcliConfig},
     event::{AppEvent, Event, EventHandler},
     proc::ProcessManager,
-    ui::{DashboardWidget, Focussable, UiState},
+    ui::{
+        dashboard::DashboardWidget,
+        state::{Focussable, UiState},
+    },
 };
 use color_eyre::eyre::Result;
 use log::*;
