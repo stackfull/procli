@@ -4,7 +4,7 @@ use crate::{
     ui::{
         debug::DebugWidget,
         process::ProcessWidget,
-        state::{Focussable, UiState},
+        state::{Focussable, Mode, UiState},
     },
 };
 use ratatui::{buffer::Buffer, layout::Rect, macros::*, prelude::*, widgets::*};
@@ -71,16 +71,32 @@ impl<'a> Widget for &mut DashboardWidget<'a> {
         let mut cells = rows.iter().flat_map(|&row| horizontal.split(row).to_vec());
         for (index, proc) in self.processes.iter().enumerate() {
             if let Some(area) = cells.next() {
+                let focussed = matches!(
+                    &self.ui.focus,
+                    Some(Focussable::Process(i)) if *i == index
+                );
+                if focussed && matches!(self.ui.mode, Mode::Spotlight) {
+                    continue;
+                }
                 ProcessWidget {
                     process: proc,
-                    focussed: matches!(
-                        &self.ui.focus,
-                        Some(Focussable::Process(i)) if *i == index
-                    ),
+                    focussed,
                     ui: self.ui,
                 }
                 .render(area, buf);
             }
+        }
+
+        if matches!(self.ui.mode, Mode::Spotlight)
+            && let Some(Focussable::Process(i)) = &self.ui.focus
+            && let Some(proc) = self.processes.get(*i)
+        {
+            ProcessWidget {
+                process: proc,
+                focussed: true,
+                ui: self.ui,
+            }
+            .render(main_rect.inner(Margin::new(2, 2)), buf);
         }
     }
 }

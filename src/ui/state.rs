@@ -10,6 +10,17 @@ pub enum Focussable {
     Debug,
 }
 
+/// The main UI mode
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Mode {
+    /// All processes and logs
+    Dashboard,
+    /// Spotlight a single process
+    Spotlight,
+    /// Large log split view
+    Logs,
+}
+
 pub struct UiState {
     pub tick: f64,
     pub time: Instant,
@@ -18,6 +29,7 @@ pub struct UiState {
     pub theme: Theme,
     pub procs: usize,
     pub focus: Option<Focussable>,
+    pub mode: Mode,
     pub debug: bool,
     pub logger_state: TuiWidgetState,
 }
@@ -30,6 +42,7 @@ impl Debug for UiState {
             .field("proc_columns", &self.proc_columns)
             .field("proc_rows", &self.proc_rows)
             .field("procs", &self.procs)
+            .field("mode", &self.mode)
             .field("focus", &self.focus)
             .finish()
     }
@@ -45,6 +58,7 @@ impl Default for UiState {
             proc_rows: 3,
             procs: 0,
             theme: Theme::dark(),
+            mode: Mode::Dashboard,
             focus: None,
             debug: false,
         }
@@ -102,6 +116,31 @@ impl UiState {
         }
     }
 
+    pub fn focus_prev(&mut self) {
+        self.focus = match &self.focus {
+            None => Some(Focussable::Process(0)),
+            Some(Focussable::Process(i)) => {
+                if *i > 0 {
+                    Some(Focussable::Process(i - 1))
+                } else if self.debug {
+                    Some(Focussable::Debug)
+                } else {
+                    Some(Focussable::Logs)
+                }
+            }
+            Some(Focussable::Logs) => {
+                if self.procs > 0 {
+                    Some(Focussable::Process(self.procs - 1))
+                } else if self.debug {
+                    Some(Focussable::Debug)
+                } else {
+                    Some(Focussable::Logs)
+                }
+            }
+            Some(Focussable::Debug) => Some(Focussable::Logs),
+        }
+    }
+
     pub fn update_procs(&mut self, count: usize) {
         self.procs = count;
         if let Some(Focussable::Process(idx)) = &self.focus
@@ -112,6 +151,14 @@ impl UiState {
             } else {
                 Focussable::Process(self.procs - 1)
             });
+        }
+    }
+
+    pub fn toggle_spotlight(&mut self) {
+        if self.mode == Mode::Spotlight {
+            self.mode = Mode::Dashboard;
+        } else {
+            self.mode = Mode::Spotlight;
         }
     }
 }

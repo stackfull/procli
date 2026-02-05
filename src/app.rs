@@ -85,7 +85,14 @@ impl App {
             }
             KeyCode::Char('r') => self.events.send(AppEvent::Reload),
             KeyCode::Char('d') => self.ui_state.toggle_debug(),
-            KeyCode::Tab => self.ui_state.focus_next(),
+            KeyCode::Enter | KeyCode::Char(' ') => self.ui_state.toggle_spotlight(),
+            KeyCode::Tab => {
+                if key_event.modifiers == KeyModifiers::SHIFT {
+                    self.ui_state.focus_prev();
+                } else {
+                    self.ui_state.focus_next()
+                }
+            }
             // Other handlers you could add here.
             _ => match self.ui_state.focus {
                 Some(Focussable::Logs) => {

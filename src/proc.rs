@@ -40,17 +40,40 @@ pub struct Process {
     pub name: String,
     pub display: String,
     pub uuid: Uuid,
-    cmd: Command,
+    pub cmd: Command,
     closer: Option<oneshot::Receiver<()>>,
     pub state: ProcessState,
     pub restarts: u32,
     pub restart_policy: RestartPolicy,
     pub pid: Option<Pid>,
+    pub last_start: Option<Instant>,
+    pub last_stop: Option<Instant>,
     pub stats: Vec<ProcessStats>,
     pub stats_max: ProcessStats,
 }
 
 impl Process {
+    fn from_service(svc: &Service) -> color_eyre::Result<Process> {
+        let mut cmd = svc.command_args()?;
+        cmd.stderr(Stdio::piped());
+        cmd.stdout(Stdio::piped());
+        Ok(Process {
+            name: svc.name.clone(),
+            display: svc.display.clone().unwrap_or(svc.name.clone()),
+            cmd,
+            uuid: Uuid::nil(),
+            state: ProcessState::Starting,
+            restarts: 0,
+            restart_policy: svc.restart,
+            pid: None,
+            last_start: None,
+            last_stop: None,
+            stats: Vec::default(),
+            stats_max: ProcessStats::default(),
+            closer: None,
+        })
+    }
+
     pub fn kill(&mut self) {
         drop(self.closer.take());
     }
@@ -165,6 +188,8 @@ impl ProcessManager {
             .find(|p| p.name == name)
             .ok_or(eyre!("No such process"))?;
 
+        let now = Instant::now();
+        proc.last_start = Some(now);
         let uuid = Uuid::new_v4();
         proc.uuid = uuid;
         info!(target: name, "Spawning process {} for {}", uuid, name);
@@ -208,35 +233,21 @@ impl ProcessManager {
     pub fn upsert(&mut self, svc: &Service) -> color_eyre::Result<Uuid> {
         // TODO: check if already running
 
-        let mut cmd = svc.command_args()?;
-        cmd.stderr(Stdio::piped());
-        cmd.stdout(Stdio::piped());
-
-        self.processes.push(Process {
-            name: svc.name.clone(),
-            display: svc.display.clone().unwrap_or(svc.name.clone()),
-            cmd,
-            uuid: Uuid::nil(),
-            state: ProcessState::Starting,
-            restarts: 0,
-            restart_policy: svc.restart,
-            pid: None,
-            stats: Vec::default(),
-            stats_max: ProcessStats::default(),
-            closer: None,
-        });
+        self.processes.push(Process::from_service(svc)?);
 
         self.spawn(&svc.name)
     }
 
     pub fn process_died(&mut self, id: Uuid, status: ExitStatus) {
         if let Some(proc) = self.processes.iter_mut().find(|p| p.uuid == id) {
+            let time_of_death = Instant::now();
             if proc.restart_policy.enabled && proc.restarts < proc.restart_policy.max_restarts {
-                let restart_at = Instant::now() + Duration::from_secs(proc.restart_policy.cooloff); //TODO: add jitter
+                let restart_at = time_of_death + Duration::from_secs(proc.restart_policy.cooloff); //TODO: add jitter
                 proc.state = ProcessState::Stopped(ProcessRestart::RestartAt(restart_at), status);
             } else {
                 proc.state = ProcessState::Stopped(ProcessRestart::NoRestart, status);
             }
+            proc.last_stop = Some(time_of_death);
         } else {
             error!("Received process died for unknown process {}", id);
         }
