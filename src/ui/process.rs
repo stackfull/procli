@@ -65,6 +65,15 @@ impl ProcessWidget<'_> {
 
     /// Render the larger modal version of the process widget.
     ///
+    /// ```"not rust"
+    /// ╭ SVC Dummy Service 1 ─ ● ────────────╮
+    /// │ Info                   Status       │
+    /// │                                     │
+    /// │ Chart                               │
+    /// │                                     │
+    /// ╰─────────────────────────────────────╯
+    /// ```
+    ///
     fn render_modal(&self, area: Rect, buf: &mut Buffer) {
         Clear.render(area, buf);
         let live = !self.process.stats.is_empty();
@@ -118,9 +127,59 @@ impl ProcessWidget<'_> {
             self.field_line("RAM: ", ram),
             self.field_line("Uptime: ", self.uptime())
         );
-        // uptime
-        // messages
         status_text.render(status, buf);
+        let (cpu, ram) = split_stats(self.ui, &self.process.stats, &self.process.stats_max);
+        // let cpu_data = cpu.data();
+        // let cpu_dataset = Dataset::default()
+        //     .name("cpu")
+        //     .marker(symbols::Marker::Braille)
+        //     .graph_type(GraphType::Line)
+        //     .style(
+        //         Style::default()
+        //             .bg(self.ui.theme.surface)
+        //             .fg(self.ui.theme.secondary),
+        //     )
+        //     .data(&cpu_data);
+        // let base_style = Style::default()
+        //     .bg(self.ui.theme.surface)
+        //     .fg(self.ui.theme.foreground);
+        // let x_axis = Axis::default()
+        //     .title("Seconds ago")
+        //     .style(base_style.clone());
+        // let y_axis = Axis::default().title("% CPU").style(base_style.clone());
+        // let chart = Chart::new(vec![cpu_dataset]).x_axis(x_axis).y_axis(y_axis);
+        // chart.render(stats, buf);
+        let ram_data = ram.data();
+        let max_ram = 1.2 * self.process.stats_max.memory_mb as f64;
+        let ram_dataset = Dataset::default()
+            .name("RAM")
+            .marker(symbols::Marker::Dot)
+            .graph_type(GraphType::Line)
+            .style(
+                Style::default()
+                    .bg(self.ui.theme.surface)
+                    .fg(self.ui.theme.secondary),
+            )
+            .data(&ram_data);
+        let base_style = Style::default()
+            .bg(self.ui.theme.surface)
+            .fg(self.ui.theme.foreground);
+        let x_axis = Axis::default()
+            .title("Seconds ago")
+            .style(base_style.clone())
+            .bounds([-30.0, 0.0])
+            .labels([rline!["30"], rline!["15"], rline!["0"]]);
+        let y_axis = Axis::default()
+            .title("MB")
+            .style(base_style.clone())
+            .bounds([0.0, max_ram])
+            .labels([
+                rline!["0.0"],
+                rline![format!("{:.2}", max_ram / 2.0)],
+                rline![format!("{:.2}", max_ram)],
+            ]);
+        let chart = Chart::new(vec![ram_dataset]).x_axis(x_axis).y_axis(y_axis);
+        chart.render(stats, buf);
     }
 
     fn uptime(&self) -> String {

@@ -23,6 +23,15 @@ pub struct SingleStat<'a> {
     ui: &'a UiState,
 }
 
+impl<'a> SingleStat<'a> {
+    pub fn data(&self) -> Vec<(f64, f64)> {
+        let now = Instant::now();
+        std::iter::zip(&self.timestamps, &self.history)
+            .map(|(x, y)| (-now.duration_since(*x).as_secs_f64(), *y as f64))
+            .collect()
+    }
+}
+
 pub fn split_stats<'a>(
     ui: &'a UiState,
     stats: &[ProcessStats],
