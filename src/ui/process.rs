@@ -128,7 +128,7 @@ impl ProcessWidget<'_> {
             self.field_line("Uptime: ", self.uptime())
         );
         status_text.render(status, buf);
-        let (cpu, ram) = split_stats(self.ui, &self.process.stats, &self.process.stats_max);
+        let (_cpu, ram) = split_stats(self.ui, &self.process.stats, &self.process.stats_max);
         // let cpu_data = cpu.data();
         // let cpu_dataset = Dataset::default()
         //     .name("cpu")
@@ -166,12 +166,12 @@ impl ProcessWidget<'_> {
             .fg(self.ui.theme.foreground);
         let x_axis = Axis::default()
             .title("Seconds ago")
-            .style(base_style.clone())
+            .style(base_style)
             .bounds([-30.0, 0.0])
             .labels([rline!["30"], rline!["15"], rline!["0"]]);
         let y_axis = Axis::default()
             .title("MB")
-            .style(base_style.clone())
+            .style(base_style)
             .bounds([0.0, max_ram])
             .labels([
                 rline!["0.0"],
@@ -202,7 +202,7 @@ impl ProcessWidget<'_> {
 
     fn field_line<'a, T: Into<Span<'a>>>(&self, label: &'a str, value: T) -> Line<'a> {
         let mut s: Span = value.into();
-        if s.style.fg == None {
+        if s.style.fg.is_none() {
             s = s.fg(self.ui.theme.foreground);
         }
         rline!(label.fg(self.ui.theme.primary), s)
@@ -221,7 +221,7 @@ impl ProcessWidget<'_> {
                 self.process.restart_policy.max_restarts, self.process.restart_policy.cooloff
             )
         } else {
-            return "No Restart".to_string();
+            "No Restart".to_string()
         }
     }
 
