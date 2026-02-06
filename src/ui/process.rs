@@ -30,6 +30,7 @@ impl ProcessWidget<'_> {
     /// ```
     fn render_card(&self, area: Rect, buf: &mut Buffer) {
         let status = self.status_indicator();
+        let updown = self.updown_indicator();
         let live = !self.process.stats.is_empty();
         let border_color = match self.focussed {
             true => self.ui.theme.accent,
@@ -39,6 +40,7 @@ impl ProcessWidget<'_> {
         let mut border = Block::bordered()
             .title_top(title)
             .title_top(status)
+            .title_bottom(rline![" ", updown, " ", self.uptime(), " "].right_aligned())
             .border_style(Style::default().bg(self.ui.theme.surface).fg(border_color))
             .bg(self.ui.theme.surface)
             .border_type(BorderType::Rounded);
@@ -111,13 +113,13 @@ impl ProcessWidget<'_> {
             .process
             .stats
             .last()
-            .map(|s| format!("{:.1} %", s.cpu_percent))
+            .map(|s| format!("{:.1}%", s.cpu_percent))
             .unwrap_or_else(|| "-".to_string());
         let ram = self
             .process
             .stats
             .last()
-            .map(|s| format!("{:.1} MB", s.memory_mb))
+            .map(|s| format!("{:.1}MB", s.memory_mb))
             .unwrap_or_else(|| "-".to_string());
         definition_text.render(definition, buf);
         let status_text = text!(
@@ -180,24 +182,6 @@ impl ProcessWidget<'_> {
             ]);
         let chart = Chart::new(vec![ram_dataset]).x_axis(x_axis).y_axis(y_axis);
         chart.render(stats, buf);
-    }
-
-    fn uptime(&self) -> String {
-        match self.process.last_start {
-            Some(then) => {
-                let last_stop = self.process.last_stop.unwrap_or(then);
-                match self.process.state {
-                    ProcessState::Starting => "...".to_string(),
-                    ProcessState::Running => {
-                        format!("{} s", self.ui.time.duration_since(then).as_secs())
-                    }
-                    ProcessState::Killing(_) | ProcessState::Stopped(_, _) => {
-                        format!("{} s", last_stop.duration_since(then).as_secs())
-                    }
-                }
-            }
-            None => "-".to_string(),
-        }
     }
 
     fn field_line<'a, T: Into<Span<'a>>>(&self, label: &'a str, value: T) -> Line<'a> {
@@ -266,6 +250,33 @@ impl ProcessWidget<'_> {
                 Span::from(" ○ ").fg(self.ui.theme.error)
             }
             crate::proc::ProcessState::Stopped(_, _) => Span::from(" ⟳ ").fg(self.ui.theme.error),
+        }
+    }
+
+    fn updown_indicator(&self) -> Span<'_> {
+        match self.process.state {
+            ProcessState::Starting => span!(""),
+            ProcessState::Running => span!("↑"),
+            ProcessState::Killing(_) => span!("↓"),
+            ProcessState::Stopped(_, _) => span!("↓"),
+        }
+    }
+
+    fn uptime(&self) -> String {
+        match self.process.last_start {
+            Some(then) => {
+                let last_stop = self.process.last_stop.unwrap_or(then);
+                match self.process.state {
+                    ProcessState::Starting => "...".to_string(),
+                    ProcessState::Running => {
+                        format!("{}s", self.ui.time.duration_since(then).as_secs())
+                    }
+                    ProcessState::Killing(_) | ProcessState::Stopped(_, _) => {
+                        format!("{}s", last_stop.duration_since(then).as_secs())
+                    }
+                }
+            }
+            None => "-".to_string(),
         }
     }
 
