@@ -1,6 +1,6 @@
 [package]
 name = "procli"
-version = "0.1.1"
+version = "0.1.2"
 description = "Process management CLI for development systems"
 authors = ["Paul <paul@stackfull.com>"]
 license = "MIT"
