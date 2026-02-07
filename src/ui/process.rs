@@ -1,7 +1,7 @@
 use std::ffi::OsStr;
 
 use crate::{
-    proc::{Process, ProcessRestart, ProcessState},
+    proc::process::{Process, ProcessRestart, ProcessState},
     ui::{
         stat_line::split_stats,
         state::{Mode, UiState},
@@ -239,17 +239,17 @@ impl ProcessWidget<'_> {
 
     fn status_indicator(&self) -> Span<'_> {
         match self.process.state {
-            crate::proc::ProcessState::Starting => {
+            ProcessState::Starting => {
                 Span::from(self.status_progress_throbber()).fg(self.ui.theme.foreground)
             }
-            crate::proc::ProcessState::Running => Span::from(" ● ").fg(self.ui.theme.success),
-            crate::proc::ProcessState::Killing(_) => {
+            ProcessState::Running => Span::from(" ● ").fg(self.ui.theme.success),
+            ProcessState::Killing(_) => {
                 Span::from(self.status_progress_throbber()).fg(self.ui.theme.warning)
             }
-            crate::proc::ProcessState::Stopped(ProcessRestart::NoRestart, _) => {
+            ProcessState::Stopped(ProcessRestart::NoRestart, _) => {
                 Span::from(" ○ ").fg(self.ui.theme.error)
             }
-            crate::proc::ProcessState::Stopped(_, _) => Span::from(" ⟳ ").fg(self.ui.theme.error),
+            ProcessState::Stopped(_, _) => Span::from(" ⟳ ").fg(self.ui.theme.error),
         }
     }
 

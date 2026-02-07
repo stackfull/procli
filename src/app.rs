@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use crate::{
     config::{ConfigManager, ProcliConfig},
     event::{AppEvent, Event, EventHandler},
-    proc::ProcessManager,
+    proc::manager::ProcessManager,
     ui::{
         dashboard::DashboardWidget,
         state::{Focussable, UiState},
@@ -157,11 +157,12 @@ impl App {
             .map(|proc| proc.name.clone())
             .collect();
         for name in removals {
-            debug!("Stop service {name}");
+            debug!("Stop process {name}");
             self.proc.remove(&name)?;
         }
         for stub in config.stubs.iter() {
             debug!("Start stub {}", stub.name);
+            self.proc.upsert(stub)?;
         }
         for svc in config.services.iter() {
             debug!("Start service {}", svc.name);

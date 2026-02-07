@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{proc::ProcessStats, ui::state::UiState};
+use crate::{proc::stats::ProcessStats, ui::state::UiState};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},

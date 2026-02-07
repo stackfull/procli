@@ -32,7 +32,7 @@ pub struct Service {
     #[serde(default)]
     pub dependencies: Vec<String>,
     #[serde(default)]
-    pub restart: RestartPolicy,
+    pub restart: Option<RestartPolicy>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
@@ -44,6 +44,7 @@ pub struct Stub {
     pub directory: Option<String>,
     #[serde(default)]
     pub environment: HashMap<String, String>,
+    pub restart: Option<RestartPolicy>,
 }
 
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]

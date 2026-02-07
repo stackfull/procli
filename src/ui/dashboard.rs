@@ -1,6 +1,6 @@
 use crate::{
     config::ProcliConfig,
-    proc::Process,
+    proc::process::Process,
     ui::{
         debug::DebugWidget,
         process::ProcessWidget,
