@@ -1,6 +1,7 @@
 use std::{fmt::Debug, time::Instant};
 
 use crate::{event::TICK_FPS, ui::theme::Theme};
+use ratatui::widgets::ScrollbarState;
 use tui_logger::*;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -32,6 +33,7 @@ pub struct UiState {
     pub mode: Mode,
     pub debug: bool,
     pub logger_state: TuiWidgetState,
+    pub debug_vertical_scroll: ScrollbarState,
 }
 
 impl Debug for UiState {
@@ -61,6 +63,7 @@ impl Default for UiState {
             mode: Mode::Dashboard,
             focus: None,
             debug: false,
+            debug_vertical_scroll: ScrollbarState::new(1),
         }
     }
 }

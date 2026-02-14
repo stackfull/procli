@@ -15,6 +15,7 @@ use ratatui::{
     DefaultTerminal,
     crossterm::event::{KeyCode, KeyEvent, KeyModifiers},
     prelude::*,
+    widgets::ScrollbarState,
 };
 use tui_logger::TuiWidgetEvent;
 
@@ -48,7 +49,7 @@ impl App {
         while self.running {
             terminal.draw(|frame| {
                 DashboardWidget {
-                    ui: &self.ui_state,
+                    ui: &mut self.ui_state,
                     processes: &self.proc.processes,
                     config: &self.config.current(),
                 }
@@ -93,7 +94,6 @@ impl App {
                     self.ui_state.focus_next()
                 }
             }
-            // Other handlers you could add here.
             _ => match self.ui_state.focus {
                 Some(Focussable::Logs) => {
                     self.ui_state.logger_state.transition(match key_event.code {
@@ -113,7 +113,29 @@ impl App {
                     });
                 }
                 Some(Focussable::Process(_)) => {}
-                Some(Focussable::Debug) => {}
+                Some(Focussable::Debug) => match key_event.code {
+                    KeyCode::Char('k') | KeyCode::Up => {
+                        self.ui_state.debug_vertical_scroll.prev();
+                    }
+                    KeyCode::Char('j') | KeyCode::Down => {
+                        self.ui_state.debug_vertical_scroll.next();
+                    }
+                    KeyCode::Char('K') | KeyCode::PageUp => {
+                        page_up(&mut self.ui_state.debug_vertical_scroll)
+                    }
+                    KeyCode::Char('J') | KeyCode::PageDown => {
+                        page_down(&mut self.ui_state.debug_vertical_scroll)
+                    }
+                    KeyCode::Home => {
+                        self.ui_state.debug_vertical_scroll.first();
+                    }
+                    KeyCode::End => {
+                        self.ui_state.debug_vertical_scroll.last();
+                    }
+
+                    _ => return Ok(()),
+                },
+
                 None => {}
             },
         }
@@ -175,4 +197,14 @@ impl App {
         self.ui_state.update_procs(self.proc.processes.len());
         Ok(())
     }
+}
+
+fn page_up(state: &mut ScrollbarState) {
+    let pos = state.get_position().saturating_sub(20);
+    *state = state.position(pos);
+}
+
+fn page_down(state: &mut ScrollbarState) {
+    let pos = state.get_position().saturating_add(20);
+    *state = state.position(pos);
 }

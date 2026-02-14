@@ -11,7 +11,7 @@ use ratatui::{buffer::Buffer, layout::Rect, macros::*, prelude::*, widgets::*};
 use tui_logger::*;
 
 pub struct DashboardWidget<'a> {
-    pub ui: &'a UiState,
+    pub ui: &'a mut UiState,
     pub processes: &'a [Process],
     pub config: &'a ProcliConfig,
 }
@@ -27,7 +27,12 @@ impl<'a> Widget for &mut DashboardWidget<'a> {
 
         let main_rect = if self.ui.debug {
             let [main_rect, panel_rect] = horizontal![>=5, >=30].areas(window_rect);
-            DebugWidget { ui: self.ui }.render(panel_rect, buf);
+            DebugWidget {
+                // ui: self.ui,
+                processes: self.processes,
+                config: self.config,
+            }
+            .render(panel_rect, buf, self.ui);
             main_rect
         } else {
             window_rect
