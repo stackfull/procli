@@ -2,14 +2,11 @@
 //!
 
 use color_eyre::Result;
-use config;
 use log::*;
-use notify::{RecommendedWatcher, Watcher};
+use notify::Watcher;
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, path::PathBuf};
-use tokio::sync::mpsc::UnboundedSender;
-
-use crate::event::{AppEvent, Event};
+use toml;
 
 pub const DEFAULT_FILE: &str = "procli.toml";
 
@@ -54,6 +51,25 @@ pub struct Agent {
     pub scenario: String,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Logging {
+    #[serde(default = "default_log_buffer_size")]
+    pub buffer_size: usize,
+    pub file: Option<String>,
+    #[serde(default = "default_log_level")]
+    pub level: log::LevelFilter,
+}
+
+impl Default for Logging {
+    fn default() -> Self {
+        Self {
+            buffer_size: default_log_buffer_size(),
+            file: Default::default(),
+            level: default_log_level(),
+        }
+    }
+}
+
 #[derive(Debug, Default, Clone, Serialize, Deserialize)]
 pub struct ProcliConfig {
     #[serde(default)]
@@ -62,8 +78,8 @@ pub struct ProcliConfig {
     pub stubs: Vec<Stub>,
     #[serde(default)]
     pub agents: Vec<Agent>,
-    #[serde(default = "default_log_buffer_size")]
-    pub log_buffer_size: usize,
+    #[serde(default)]
+    pub logging: Logging,
 }
 
 impl ProcliConfig {
@@ -87,25 +103,31 @@ fn default_log_buffer_size() -> usize {
     10_000
 }
 
+fn default_log_level() -> LevelFilter {
+    LevelFilter::Info
+}
+
 #[derive(Debug)]
 pub struct ConfigManager {
     pub file_path: PathBuf,
     config: ProcliConfig,
-    _watcher: RecommendedWatcher,
 }
 
 impl ConfigManager {
-    pub fn new(file_path: PathBuf, sender: UnboundedSender<Event>) -> Result<ConfigManager> {
-        let mut watcher = notify::recommended_watcher(move |_| {
-            let _ = sender.send(Event::App(AppEvent::Reload));
-        })?;
+    pub fn new(file_path: PathBuf) -> Result<ConfigManager> {
         info!(target: "Config", "Watching file {:?}", file_path);
-        watcher.watch(&file_path, notify::RecursiveMode::NonRecursive)?;
         Ok(ConfigManager {
             file_path: file_path.clone(),
             config: Self::load_from_file(file_path.clone())?,
-            _watcher: watcher,
         })
+    }
+    pub fn watch(&self) -> color_eyre::Result<()> {
+        let mut watcher = notify::recommended_watcher(move |_| {
+            // TODO:
+            // let _ = sender.send(Event::App(AppEvent::Reload));
+        })?;
+        watcher.watch(&self.file_path, notify::RecursiveMode::NonRecursive)?;
+        Ok(())
     }
 
     pub fn current(&self) -> ProcliConfig {
@@ -118,10 +140,8 @@ impl ConfigManager {
     }
 
     fn load_from_file(file_path: PathBuf) -> Result<ProcliConfig> {
-        let raw = config::Config::builder()
-            .add_source(config::File::from(file_path))
-            .add_source(config::Environment::with_prefix("PROCLI_"))
-            .build()?;
-        Ok(raw.try_deserialize()?)
+        let raw = std::fs::read_to_string(file_path)?;
+        let t = toml::from_str(&raw)?;
+        Ok(t)
     }
 }

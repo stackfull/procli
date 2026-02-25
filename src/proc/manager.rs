@@ -6,38 +6,34 @@ use std::{
 use color_eyre::eyre::{OptionExt, eyre};
 use log::*;
 use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System};
-use tokio::{sync::mpsc::UnboundedSender, time::sleep};
 use uuid::Uuid;
 
-use crate::{
-    event::{AppEvent, Event},
-    proc::{
-        process::{Named, Process, ProcessConfig, ProcessRestart, ProcessState},
-        stats::ProcessStats,
-    },
+use crate::proc::{
+    process::{Named, Process, ProcessConfig, ProcessRestart, ProcessState},
+    stats::ProcessStats,
 };
 
 #[derive(Debug)]
 pub struct ProcessManager {
     pub processes: Vec<Process>,
-    sender: UnboundedSender<Event>,
+    // sender: UnboundedSender<Event>,
     sys: sysinfo::System,
 }
 
 impl ProcessManager {
-    pub fn new(sender: UnboundedSender<Event>) -> Self {
-        let ticker = sender.clone();
-        tokio::spawn(async move {
-            loop {
-                sleep(Duration::from_secs(2)).await;
-                ticker
-                    .send(Event::App(AppEvent::StatsRefresh))
-                    .expect("sending process died message");
-            }
-        });
+    pub fn new() -> Self {
+        // let ticker = sender.clone();
+        // tokio::spawn(async move {
+        //     loop {
+        //         sleep(Duration::from_secs(2)).await;
+        //         ticker
+        //             .send(Event::App(AppEvent::StatsRefresh))
+        //             .expect("sending process died message");
+        //     }
+        // });
         Self {
             processes: vec![],
-            sender,
+            // sender,
             sys: System::new(),
         }
     }
@@ -93,9 +89,9 @@ impl ProcessManager {
     /// tasks as well as death handler etc.
     ///
     fn spawn(&mut self, name: &str) -> color_eyre::Result<Uuid> {
-        let sender = self.sender.clone();
+        // let sender = self.sender.clone();
         let proc = self.find(name).ok_or(eyre!("No such process"))?;
-        let uuid = proc.spawn(sender)?;
+        let uuid = proc.spawn()?;
         self.refresh_stats();
         Ok(uuid)
     }

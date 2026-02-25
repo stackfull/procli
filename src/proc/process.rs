@@ -13,13 +13,12 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     process::{ChildStderr, ChildStdout, Command},
     select,
-    sync::{mpsc::UnboundedSender, oneshot},
+    sync::oneshot,
 };
 use uuid::Uuid;
 
 use crate::{
     config::{RestartPolicy, Service, Stub},
-    event::{AppEvent, Event},
     proc::{command::build_command, stats::ProcessStats},
 };
 
@@ -162,7 +161,7 @@ impl Process {
         })
     }
 
-    pub fn spawn(&mut self, sender: UnboundedSender<Event>) -> color_eyre::Result<Uuid> {
+    pub fn spawn(&mut self) -> color_eyre::Result<Uuid> {
         let now = Instant::now();
         self.last_start = Some(now);
         let uuid = Uuid::new_v4();
@@ -183,7 +182,7 @@ impl Process {
             self.name.to_string(),
             uuid,
             closed,
-            sender,
+            // sender,
             child,
         ));
         Ok(uuid)
@@ -223,14 +222,14 @@ async fn death_handler(
     name: String,
     uuid: Uuid,
     mut closed: oneshot::Sender<()>,
-    sender: UnboundedSender<Event>,
+    // sender: UnboundedSender<Event>,
     mut child: tokio::process::Child,
 ) {
     loop {
         select! {
             status = child.wait() => {
                 info!(target: &name, "Process exit {:?}", status);
-                sender.send(Event::App(AppEvent::ProcessDied(uuid, status.unwrap()))).expect("sending process died message");
+                // sender.send(Event::App(AppEvent::ProcessDied(uuid, status.unwrap()))).expect("sending process died message");
                 return;
             }
             _ = closed.closed() => {

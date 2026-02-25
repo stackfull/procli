@@ -3,7 +3,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use crate::{proc::stats::ProcessStats, ui::state::UiState};
+use crate::{proc::stats::ProcessStats, ui::theme::Theme};
 use ratatui::{
     buffer::Buffer,
     layout::{Alignment, Rect},
@@ -14,29 +14,30 @@ use ratatui::{
 };
 
 #[derive(Debug)]
-pub struct SingleStat<'a> {
+pub struct SingleStat {
     name: String,
     unit: String,
     history: Vec<f32>,
     max: f32,
     timestamps: Vec<Instant>,
-    ui: &'a UiState,
+    time: Instant,
+    theme: Theme,
 }
 
-impl<'a> SingleStat<'a> {
+impl SingleStat {
     pub fn data(&self) -> Vec<(f64, f64)> {
-        let now = Instant::now();
         std::iter::zip(&self.timestamps, &self.history)
-            .map(|(x, y)| (-now.duration_since(*x).as_secs_f64(), *y as f64))
+            .map(|(x, y)| (-self.time.duration_since(*x).as_secs_f64(), *y as f64))
             .collect()
     }
 }
 
 pub fn split_stats<'a>(
-    ui: &'a UiState,
     stats: &[ProcessStats],
     max_stats: &ProcessStats,
-) -> (SingleStat<'a>, SingleStat<'a>) {
+    now: Instant,
+    theme: Theme,
+) -> (SingleStat, SingleStat) {
     let timestamps: Vec<Instant> = stats.iter().map(|s| s.timestamp).collect();
     let cpu_history = SingleStat {
         name: "CPU".to_string(),
@@ -44,7 +45,8 @@ pub fn split_stats<'a>(
         history: stats.iter().map(|s| s.cpu_percent).collect(),
         max: max_stats.cpu_percent,
         timestamps: timestamps.clone(),
-        ui,
+        time: now,
+        theme,
     };
     let mem_history = SingleStat {
         name: "RAM".to_string(),
@@ -52,27 +54,28 @@ pub fn split_stats<'a>(
         history: stats.iter().map(|s| s.memory_mb).collect(),
         max: max_stats.memory_mb,
         timestamps,
-        ui,
+        time: now,
+        theme,
     };
     (cpu_history, mem_history)
 }
 
-impl<'a> Widget for &SingleStat<'a> {
+impl Widget for &SingleStat {
     fn render(self, area: Rect, buf: &mut Buffer) {
         let [_, history, _, label, current, _] =
             horizontal![==1, *=1, ==1, ==6, ==8, ==2].areas(area);
         Text::from(self.name.clone() + ":").render(label, buf);
         ratatui::macros::line![
             span![format!("{:.1}", self.history.last().unwrap_or(&0.0))],
-            span![format!("{:<2}", self.unit.clone())].fg(self.ui.theme.primary_background)
+            span![format!("{:<2}", self.unit.clone())].fg(self.theme.primary_background)
         ]
         .alignment(Alignment::Right)
         .render(current, buf);
         let resampled: Vec<Option<u64>> = crate::resample::resample(
             &self.history,
             &self.timestamps,
-            self.ui.time - Duration::from_secs(120),
-            self.ui.time,
+            self.time - Duration::from_secs(120),
+            self.time,
             history.width as usize,
         )
         .iter()
@@ -92,7 +95,7 @@ impl<'a> Widget for &SingleStat<'a> {
             .data(&resampled)
             .max((self.max * 1.1) as u64)
             .absent_value_symbol("_")
-            .fg(self.ui.theme.primary)
+            .fg(self.theme.primary)
             .render(history, buf);
     }
 }
